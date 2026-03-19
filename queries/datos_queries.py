@@ -28,7 +28,8 @@ def obtener_datos() -> list:
                 ON i.institucion_id = c.institucion_id
             LEFT JOIN estudiantes e 
                 ON i.institucion_id = e.institucion_id 
-                AND c.carrera_id = e.carrera_id
+                AND c.carrera_id = e.carrera_id 
+                AND e.estatus = 'aprobado'
             ORDER BY e.alumno_id
             """
         )
