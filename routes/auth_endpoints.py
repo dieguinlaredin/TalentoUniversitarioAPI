@@ -4,7 +4,10 @@ from datetime import datetime, timedelta, timezone
 import jwt
 from flask import Blueprint, jsonify, request
 
-from queries.auth_queries import crear_usuario, obtener_clientes
+from queries.auth_queries import (
+    crear_usuario, obtener_clientes,
+    aprobar_estudiante_query, obtener_estudiantes_pendientes
+    )
 
 
 auth_bp = Blueprint("auth", __name__)
@@ -65,6 +68,7 @@ def admin_create_user():
         "usuario_id": result.get("usuario_id")
     }), 201
     
+    
 @auth_bp.route("/admin/clientes", methods=["GET"])
 def obtener_clientes_endpoint():
 
@@ -74,3 +78,28 @@ def obtener_clientes_endpoint():
     clientes = obtener_clientes()
 
     return jsonify(clientes), 200
+
+
+@auth_bp.route("/admin/aprobar-estudiante/<id>", methods=["PUT"])
+def aprobar_estudiante(id):
+
+    if request.headers.get("Authorization") != "Bearer ADMIN_SECRET":
+        return jsonify({"error": "No autorizado"}), 401
+
+    result = aprobar_estudiante_query(id)
+
+    if not result.get("ok"):
+        return jsonify({"error": result.get("error")}), 400
+
+    return jsonify({"message": "Aprobado"}), 200
+
+
+@auth_bp.route("/admin/pendientes", methods=["GET"])
+def obtener_pendientes():
+
+    if request.headers.get("Authorization") != "Bearer ADMIN_SECRET":
+        return jsonify({"error": "No autorizado"}), 401
+
+    data = obtener_estudiantes_pendientes()
+
+    return jsonify(data), 200
