@@ -51,3 +51,70 @@ def obtener_clientes():
     connection.close()
 
     return data
+
+
+def aprobar_estudiante_query(id):
+    connection = get_connection()
+    if not connection:
+        return {"ok": False, "error": "No se pudo conectar a la BD"}
+
+    cursor = None
+
+    try:
+        cursor = connection.cursor()
+
+        cursor.execute("""
+            UPDATE estudiantes
+            SET estatus = 'aprobado'
+            WHERE alumno_id = %s
+        """, (id,))
+
+        connection.commit()
+
+        if cursor.rowcount == 0:
+            return {"ok": False, "error": "No se encontró el estudiante"}
+
+        return {"ok": True}
+
+    except Exception as ex:
+        connection.rollback()
+        print(f"Error al aprobar estudiante: {ex}")
+        return {"ok": False, "error": "Error al actualizar"}
+
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+        
+    
+def obtener_estudiantes_pendientes():
+    connection = get_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT 
+            e.alumno_id,
+            e.nombre,
+            e.promedio,
+            e.tipo_periodo,
+            e.periodo_numero,
+            e.disponibilidad,
+            i.nombre AS institucion,
+            i.cct,
+            i.ciudad,
+            i.estado,
+            c.nombre AS carrera,
+            c.nivel
+        FROM estudiantes e
+        LEFT JOIN instituciones i ON e.institucion_id = i.institucion_id
+        LEFT JOIN carreras c ON e.carrera_id = c.carrera_id
+        WHERE e.estatus = 'pendiente'
+    """)
+
+    data = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return data
